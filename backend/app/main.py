@@ -1,12 +1,13 @@
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, WebSocket
 from pydantic import BaseModel
 
 from app.auth import AuthConfig, issue_token, verify_credentials
 from app.config import Settings
 from app.routes_sessions import create_sessions_router
 from app.storage import SessionStore
+from app.terminal_ws import handle_terminal_ws
 
 
 class LoginRequest(BaseModel):
@@ -72,6 +73,11 @@ def create_app(
             # Invalid credentials; reject the login.
             raise HTTPException(status_code=401, detail="invalid credentials")
         return {"token": issue_token(payload.username)}
+
+    @app.websocket("/ws/terminal/{session_id}")
+    async def terminal_ws(websocket: WebSocket, session_id: str) -> None:
+        """Websocket endpoint for tmux session streaming."""
+        await handle_terminal_ws(websocket, session_id)
 
     app.include_router(create_sessions_router(auth_config, store, max_sessions=max_sessions_value))
 
