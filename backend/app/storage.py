@@ -33,6 +33,24 @@ class SessionStore:
         """Return all persisted session records."""
         return self._load()
 
+    def rename(self, session_id: str, name: str) -> dict[str, Any]:
+        """Rename a session by id and persist the change."""
+        sessions = self._load()
+        for session in sessions:
+            if session["id"] == session_id:
+                session["name"] = name
+                # Update last active time on rename.
+                session["lastActiveAt"] = datetime.now(timezone.utc).isoformat()
+                self._save(sessions)
+                return session
+        raise KeyError(f"session not found: {session_id}")
+
+    def delete(self, session_id: str) -> None:
+        """Delete a session by id."""
+        sessions = self._load()
+        filtered = [session for session in sessions if session["id"] != session_id]
+        self._save(filtered)
+
     def _load(self) -> list[dict[str, Any]]:
         """Load session records from disk or return an empty list."""
         if not self._file_path.exists():

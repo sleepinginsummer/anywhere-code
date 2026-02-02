@@ -1,7 +1,16 @@
+from dataclasses import dataclass
 from typing import Final
 
 
 TOKEN_PREFIX: Final[str] = "token-"
+
+
+@dataclass(frozen=True)
+class AuthConfig:
+    """Auth configuration for the application."""
+
+    username: str
+    password: str
 
 
 def verify_credentials(username: str, password: str, expected_user: str, expected_pass: str) -> bool:
